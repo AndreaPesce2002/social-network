@@ -1,0 +1,27 @@
+
+
+  <h1>Profilo</h1>
+
+  <dev id="info">
+    <h2><b>{{utente.nome}}</b></h2>
+    <p>descrizione: {{utente.descrizione}}</p>
+    <p>iscritti: <b>{{utente.num_follower}}</b></p>
+  </dev>
+  <a href="{% url 'login' %}">cambia Account</a>
+  <button id="logout-btn">Logout</button>
+  <hr style="height: 2px; background-color: black;">
+
+  <script>
+
+    function deleteCookie(name) {
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+
+    var logoutBtn = document.getElementById('logout-btn');
+    logoutBtn.addEventListener('click', function() {
+      deleteCookie('id_utente');
+      window.location.href = '{% url "login" %}';
+    });
+  </script>
+
+

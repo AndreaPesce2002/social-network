@@ -1,0 +1,20 @@
+{% extends 'frontend/lateralMenu.html' %}
+
+{% block page %}
+  <h2>Registrazione</h2>
+
+  {% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {{ user_form.as_p }}
+    <button type="submit">Registrati</button>
+  </form>
+  <a href="{% url 'login'%}">passa al login</a>
+{% endblock %}
