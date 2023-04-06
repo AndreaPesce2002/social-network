@@ -6,30 +6,39 @@ from django.contrib import messages
 from .models import Utente, Post
 
 
-def index(request):
+def ele(request):
     follower_ids = Utente.objects.filter(id=request.COOKIES.get('id_utente')).values_list('followers__id', flat=True)
-    if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
-        utente=Utente.objects.get(id=request.COOKIES.get('id_utente'))
+    utente=Utente.objects.get(id=request.COOKIES.get('id_utente'))
+    return follower_ids,utente
+
+def index(request):
+    if 'id_utente' in request.COOKIES:
+        if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
+            follower_ids, utente = ele(request)
+            return render(request, 'frontend/post.html', {'posts': Post.objects.all().order_by('-like'), 'utente': utente,'seguiti':follower_ids, 'title':'TUTTI I POST'})
+        else:
+            return login(request)
     else:
-        utente= None
-    return render(request, 'frontend/post.html', {'posts': Post.objects.all().order_by('-like'), 'utente': utente,'seguiti':follower_ids, 'title':'TUTTI I POST'})
+        return render(request, 'frontend/post.html', {'posts': Post.objects.all().order_by('-like'), 'title':'TUTTI I POST'})
 
 def profilo(request):
-    follower_ids = Utente.objects.filter(id=request.COOKIES.get('id_utente')).values_list('followers__id', flat=True)
-    if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
-        utente=Utente.objects.get(id=request.COOKIES.get('id_utente'))
+    if 'id_utente' in request.COOKIES:
+        if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
+            follower_ids, utente = ele(request)
+            return render(request, 'frontend/post.html', {'posts': Post.objects.filter(creatore=request.COOKIES.get('id_utente')), 'utente': utente, 'seguiti':follower_ids, 'pagina': 'frontend/profilo.html'})
+        else:
+            return login(request)
     else:
-        utente= None
-    return render(request, 'frontend/post.html', {'posts': Post.objects.filter(creatore=request.COOKIES.get('id_utente')), 'utente': utente, 'seguiti':follower_ids, 'pagina': 'frontend/profilo.html'})
-
+        return login(request)
+ 
+    
 def seguiti(request):
-    follower_ids = Utente.objects.filter(id=request.COOKIES.get('id_utente')).values_list('followers__id', flat=True)
-    posts = Post.objects.filter(creatore_id__in=follower_ids)
     if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
-        utente=Utente.objects.get(id=request.COOKIES.get('id_utente'))
+        follower_ids, utente = ele(request)
+        posts = Post.objects.filter(creatore_id__in=follower_ids)
+        return render(request, 'frontend/post.html', {'posts': posts, 'utente': utente,'seguiti':follower_ids, 'title':'SEGUITI'})
     else:
-        utente= None
-    return render(request, 'frontend/post.html', {'posts': posts, 'utente': utente,'seguiti':follower_ids, 'title':'SEGUITI'})
+        return login(request)
 
 def register(request):
     if request.method == 'POST':
@@ -63,18 +72,24 @@ def login(request):
     return render(request, 'frontend/login.html', {'user_form': user_form})
 
 def create_post(request):
-    if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES)
-        if form.is_valid():
-            post = form.save(user_id=request.COOKIES.get('id_utente'))
-            messages.success(request, 'Post creato con successo!')
-            return redirect('home')
+    if 'id_utente' in request.COOKIES:
+        if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
+            if request.method == 'POST':
+                form = PostForm(request.POST, request.FILES)
+                if form.is_valid():
+                    post = form.save(user_id=request.COOKIES.get('id_utente'))
+                    messages.success(request, 'Post creato con successo!')
+                    return redirect('home')
+                else:
+                    messages.error(request, 'qualcosa è andato storto')
+            else:
+                form = PostForm()
+            return render(request, 'frontend/creaPost.html', {'form': form})
         else:
-            messages.error(request, 'qualcosa è andato storto')
+            return login(request)
     else:
-        form = PostForm()
-    return render(request, 'frontend/creaPost.html', {'form': form})
-
+        return login(request)
+    
 def increment_like(request, post_id):
     post = Post.objects.get(id=post_id)
     post.like += 1
