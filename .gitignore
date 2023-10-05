@@ -1,4 +1,4 @@
-frontend/media/*
+media/*
 frontend/migrations/*
 frontend/__pycache__/*
 instagram/__pycache__/*
