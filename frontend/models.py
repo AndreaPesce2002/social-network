@@ -15,20 +15,20 @@ class Utente(models.Model):
         self.password = make_password(raw_password)
 
     def num_follower(self):
-        return Utente.objects.filter(followers=self).count()
+        return self.followers.count()
 
 class Post(models.Model):
-    creatore  = models.ForeignKey(Utente, on_delete=models.CASCADE)
+    creatore  = models.ForeignKey(Utente, on_delete=models.CASCADE, related_name='posts')
     post = models.ImageField()
     descrizione = models.CharField(max_length=200)
-    like = models.IntegerField(default=0)
+    like = models.ManyToManyField(Utente, related_name='liked_by', blank=True)
     dataPubblicazione = models.DateTimeField(default=timezone.now())
 
     class Meta:
         ordering = ['-dataPubblicazione']
 
-    def add_like(self):
-        self.likes += 1
+    def add_like(self, user):
+        self.like.add(user)
         self.save()
     
     def time_passed(self):
@@ -44,3 +44,6 @@ class Post(models.Model):
             return f"{int(seconds / 3600)}h fa"
         else:
             return f"{int(seconds / 86400)}gg fa"
+        
+    def num_like(self):
+        return self.like.count()

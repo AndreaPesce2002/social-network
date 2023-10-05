@@ -4,6 +4,7 @@ from django.urls import reverse
 from .forms import RegisterForm, LoginForm, PostForm
 from django.contrib import messages
 from .models import Utente, Post
+from django.db.models import Count
 
 
 def ele(request):
@@ -15,11 +16,11 @@ def index(request):
     if 'id_utente' in request.COOKIES:
         if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
             follower_ids, utente = ele(request)
-            return render(request, 'frontend/post.html', {'posts': Post.objects.all().order_by('-like'), 'utente': utente,'seguiti':follower_ids, 'title':'TUTTI I POST'})
+            return render(request, 'frontend/post.html', {'posts': Post.objects.annotate(num_likes=Count('like')).order_by('-num_likes'), 'utente': utente,'seguiti':follower_ids, 'title':'TUTTI I POST'})
         else:
             return login(request)
     else:
-        return render(request, 'frontend/post.html', {'posts': Post.objects.all().order_by('-like'), 'title':'TUTTI I POST'})
+        return render(request, 'frontend/post.html', {'posts':Post.objects.annotate(num_likes=Count('like')).order_by('-num_likes'), 'title':'TUTTI I POST'})
 
 def profilo(request):
     if 'id_utente' in request.COOKIES:
@@ -91,8 +92,9 @@ def create_post(request):
         return login(request)
     
 def increment_like(request, post_id):
+    utente = Utente.objects.get(id=request.COOKIES.get('id_utente'))
     post = Post.objects.get(id=post_id)
-    post.like += 1
+    post.like.add(utente)
     post.save()
     next_url = request.GET.get('next', None)
     if next_url:

@@ -2,3 +2,4 @@ frontend/media/*
 frontend/migrations/*
 frontend/__pycache__/*
 instagram/__pycache__/*
+db.sqlite3

@@ -74,7 +74,7 @@
               {% csrf_token %}
               <button type="submit" id="like-button">Mi piace</button>
             </form>
-            <span class='post-like' id='like-{{post.id}}'>{{post.like}} ❤️</span>
+            <span class='post-like' id='like-{{post.id}}'>{{post.num_like}} ❤️</span>
             <span class='post-time'>pubblicato {{post.time_passed}}</span>
           </div>
         </div>
