@@ -8,25 +8,39 @@ from django.db.models import Count
 
 
 def ele(request):
-    follower_ids = Utente.objects.filter(id=request.COOKIES.get('id_utente')).values_list('followers__id', flat=True)
-    utente=Utente.objects.get(id=request.COOKIES.get('id_utente'))
-    return follower_ids,utente
+    utente = Utente.objects.get(id=request.COOKIES.get('id_utente'))
+    following_ids = utente.following.values_list('id', flat=True)
+    followers_ids = utente.followers.values_list('id', flat=True)
+    return following_ids, followers_ids, utente
 
 def index(request):
     if 'id_utente' in request.COOKIES:
         if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
-            follower_ids, utente = ele(request)
-            return render(request, 'frontend/post.html', {'posts': Post.objects.annotate(num_likes=Count('like')).order_by('-num_likes'), 'utente': utente,'seguiti':follower_ids, 'title':'TUTTI I POST'})
+            following_ids, followers_ids, utente = ele(request)
+            return render(request, 'frontend/post.html', {
+                'posts': Post.objects.annotate(num_likes=Count('like')).order_by('-num_likes'),
+                'utente': utente,
+                'seguiti':following_ids,
+                'title':'TUTTI I POST'
+            })
         else:
             return login(request)
     else:
-        return render(request, 'frontend/post.html', {'posts':Post.objects.annotate(num_likes=Count('like')).order_by('-num_likes'), 'title':'TUTTI I POST'})
+        return render(request, 'frontend/post.html', {
+            'posts':Post.objects.annotate(num_likes=Count('like')).order_by('-num_likes'),
+            'title':'TUTTI I POST'
+        })
 
 def profilo(request):
     if 'id_utente' in request.COOKIES:
         if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
-            follower_ids, utente = ele(request)
-            return render(request, 'frontend/post.html', {'posts': Post.objects.filter(creatore=request.COOKIES.get('id_utente')), 'utente': utente, 'seguiti':follower_ids, 'pagina': 'frontend/profilo.html'})
+            following_ids, followers_ids, utente = ele(request)
+            return render(request, 'frontend/post.html', {
+                'posts': Post.objects.filter(creatore=request.COOKIES.get('id_utente')),
+                'utente': utente,
+                'seguiti':following_ids,
+                'pagina': 'frontend/profilo.html'
+            })
         else:
             return login(request)
     else:
@@ -35,9 +49,14 @@ def profilo(request):
     
 def seguiti(request):
     if Utente.objects.filter(id=request.COOKIES.get('id_utente')).exists():
-        follower_ids, utente = ele(request)
-        posts = Post.objects.filter(creatore_id__in=follower_ids)
-        return render(request, 'frontend/post.html', {'posts': posts, 'utente': utente,'seguiti':follower_ids, 'title':'SEGUITI'})
+        following_ids, followers_ids, utente = ele(request)
+        posts = Post.objects.filter(creatore_id__in=following_ids)
+        return render(request, 'frontend/post.html', {
+            'posts': posts,
+            'utente': utente,
+            'seguiti':following_ids,
+            'title':'SEGUITI'
+        })
     else:
         return login(request)
 
@@ -91,12 +110,18 @@ def create_post(request):
     else:
         return login(request)
     
-def increment_like(request, post_id):
+def gestion_like(request, post_id):
     utente = Utente.objects.get(id=request.COOKIES.get('id_utente'))
     post = Post.objects.get(id=post_id)
-    post.like.add(utente)
+    
+    if utente in post.like.all():
+        post.like.remove(utente)
+    else:
+        post.like.add(utente)
+    
     post.save()
     next_url = request.GET.get('next', None)
+    
     if next_url:
         return redirect(next_url)
     else:
@@ -104,7 +129,9 @@ def increment_like(request, post_id):
 
 def iscriviti(request, utente_id, creatore_id):
     utente = Utente.objects.get(id=utente_id)
-    utente.followers.add(creatore_id)
+    crestore = Utente.objects.get(id=creatore_id)
+    crestore.followers.add(utente)
+    utente.following.add(crestore)
     utente.save()
     next_url = request.GET.get('next', None)
     if next_url:
@@ -114,7 +141,9 @@ def iscriviti(request, utente_id, creatore_id):
 
 def iscritto(request, utente_id, creatore_id):
     utente = Utente.objects.get(id=utente_id)
-    utente.followers.remove(creatore_id)
+    crestore = Utente.objects.get(id=creatore_id)
+    crestore.followers.remove(utente)
+    utente.following.remove(crestore)
     utente.save()
     next_url = request.GET.get('next', None)
     if next_url:

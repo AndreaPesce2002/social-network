@@ -52,16 +52,18 @@
           <div class="post-header">
             <span class="post-nome">{{ post.creatore.nome }}</span>
             {% if request.COOKIES.id_utente %}
-              {% if post.creatore.id in seguiti %}
-                <form method="POST" action="{% url 'iscritto' utente.id post.creatore.id %}?next={{ request.path }}">
-                  {% csrf_token %}
-                  <button type="submit" class="post-button" id="button-{{ post.id }}">iscritto</button>
-                </form>
-              {% else %}
-                <form method="POST" action="{% url 'iscriviti' utente.id post.creatore.id %}?next={{ request.path }}">
-                  {% csrf_token %}
-                  <button type="submit" class="post-button" id="button-{{ post.id }}">iscriviti</button>
-                </form>
+              {% if utente.id != post.creatore.id%}
+                {% if post.creatore.id in seguiti %}
+                  <form method="POST" action="{% url 'iscritto' utente.id post.creatore.id %}?next={{ request.path }}">
+                    {% csrf_token %}
+                    <button type="submit" class="post-button" id="button-{{ post.id }}">iscritto</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="{% url 'iscriviti' utente.id post.creatore.id %}?next={{ request.path }}">
+                    {% csrf_token %}
+                    <button type="submit" class="post-button" id="button-{{ post.id }}">iscriviti</button>
+                  </form>
+                {% endif %}
               {% endif %}
             {% endif %}
           </div>
@@ -70,10 +72,12 @@
             <span class='post-descrizione'>{{post.descrizione}}</span>
           </div>
           <div class='post-footer'>
-            <form method="POST" action="{% url 'increment_like' post.id %}?next={{ request.path }}">
+
+            <form method="POST" action="{% url 'gestion_like' post.id %}?next={{ request.path }}">
               {% csrf_token %}
-              <button type="submit" id="like-button">Mi piace</button>
+              <button type="submit" id="like-button">mi piace</button>
             </form>
+
             <span class='post-like' id='like-{{post.id}}'>{{post.num_like}} ❤️</span>
             <span class='post-time'>pubblicato {{post.time_passed}}</span>
           </div>

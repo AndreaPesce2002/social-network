@@ -9,8 +9,8 @@ class Utente(models.Model):
     nome = models.CharField(max_length=200)
     password = models.CharField(max_length=200)
     descrizione=models.CharField(max_length=200)
-    followers = models.ManyToManyField('self', related_name='following', blank=True, default=[], symmetrical=False)
-
+    followers = models.ManyToManyField('self', related_name='followed_by', blank=True, default=[], symmetrical=False)
+    following = models.ManyToManyField('self', related_name='follows', blank=True, default=[], symmetrical=False)
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
 
