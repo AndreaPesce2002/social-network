@@ -51,3 +51,6 @@ class PostForm(forms.ModelForm):
             return post
         return None
     
+
+        
+    

@@ -1,5 +1,6 @@
 media/*
-frontend/migrations/*
-frontend/__pycache__/*
-instagram/__pycache__/*
+*/migrations/*
+*/__pycache__/*
 db.sqlite3
+.venv
+.vscode
